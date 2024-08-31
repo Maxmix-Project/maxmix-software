@@ -14,7 +14,7 @@ jobs:
         shell: cmd
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
   
@@ -29,10 +29,10 @@ jobs:
         echo 1: ${{env.VERSION}}
         echo 2: $VERSION
 
-    - name: Setup Python 3.8
-      uses: actions/setup-python@v2
+    - name: Setup Python 3.12
+      uses: actions/setup-python@v5
       with:
-        python-version: 3.8
+        python-version: 3.12
 
     - name: Setup PlatformIO
       run: |
@@ -40,12 +40,12 @@ jobs:
         pip install -U platformio
 
     - name: Build Firmware - Full step
-      run: platformio run --project-dir .\Embedded\Maxmix -e nano-cli -e nano-cli-halfstep
+      run: platformio run --project-dir .\Embedded\MaxMix -e nano-cli -e nano-cli-halfstep
 
     - name: Setup NuGet.exe
       uses: NuGet/setup-nuget@v1
     - name: Setup MSBuild.exe
-      uses: microsoft/setup-msbuild@v1
+      uses: microsoft/setup-msbuild@v2
     - name: Setup MSBuild ExtensionPack
       run: choco install msbuild.extensionpack --version=4.0.15.0 -y    
       
@@ -108,7 +108,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: Embedded\Maxmix\.pio\build\nano-cli\firmware.hex
+        asset_path: Embedded\MaxMix\.pio\build\nano-cli\firmware.hex
         asset_name: Maxmix.${{env.VERSION}}.hex
         asset_content_type: application/zip
 
@@ -119,6 +119,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: Embedded\Maxmix\.pio\build\nano-cli-halfstep\firmware.hex
+        asset_path: Embedded\MaxMix\.pio\build\nano-cli-halfstep\firmware.hex
         asset_name: Maxmix.${{env.VERSION}}_Half-step.hex
         asset_content_type: application/zip

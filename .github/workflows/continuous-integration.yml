@@ -10,26 +10,26 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: Checkout Repo
-      uses: actions/checkout@v2
-    - name: Setup Python 3.8
-      uses: actions/setup-python@v2
+      uses: actions/checkout@v4
+    - name: Setup Python 3.12
+      uses: actions/setup-python@v5
       with:
-        python-version: 3.8
+        python-version: 3.12
     - name: Setup PlatformIO
       run: |
         python -m pip install --upgrade pip
         pip install -U platformio    
     - name: Build Firmware
-      run: platformio run --project-dir .\Embedded\Maxmix -e nano-cli 
+      run: platformio run --project-dir .\Embedded\MaxMix -e nano-cli 
 
   build-app:
     name: 'Build MaxMix App'
     runs-on: windows-latest
     steps:
     - name: Checkout Repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Setup MSBuild.exe
-      uses: microsoft/setup-msbuild@v1
+      uses: microsoft/setup-msbuild@v2
     - name: Setup MSBuild ExtensionPack
       run: choco install msbuild.extensionpack --version=4.0.15.0 -y 
     - name: Build
@@ -40,9 +40,9 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: Checkout Repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Setup MSBuild.exe
-      uses: microsoft/setup-msbuild@v1
+      uses: microsoft/setup-msbuild@v2
     - name: Setup MSBuild ExtensionPack
       run: choco install msbuild.extensionpack --version=4.0.15.0 -y 
     - name: Build
@@ -53,9 +53,9 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: Checkout Repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Setup MSBuild.exe
-      uses: microsoft/setup-msbuild@v1
+      uses: microsoft/setup-msbuild@v2
     - name: Setup MSBuild ExtensionPack
       run: choco install msbuild.extensionpack --version=4.0.15.0 -y 
     - name: Build
