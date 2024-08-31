@@ -14,111 +14,109 @@ jobs:
         shell: cmd
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-  
-    - name: Get tag version
-      id: get_version
-      run: |
-        echo VERSION="${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
-      shell: bash
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Check version
-      run: |
-        echo 1: ${{env.VERSION}}
-        echo 2: $VERSION
+      - name: Get tag version
+        id: get_version
+        run: |
+          echo VERSION="${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+        shell: bash
 
-    - name: Setup Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.12
+      - name: Check version
+        run: 'echo Version: ${{env.VERSION}}'
 
-    - name: Setup PlatformIO
-      run: |
-        python -m pip install --upgrade pip
-        pip install -U platformio
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
 
-    - name: Build Firmware - Full step
-      run: platformio run --project-dir .\Embedded\MaxMix -e nano-cli -e nano-cli-halfstep
+      - name: Setup PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install -U platformio
 
-    - name: Setup NuGet.exe
-      uses: NuGet/setup-nuget@v1
-    - name: Setup MSBuild.exe
-      uses: microsoft/setup-msbuild@v2
-    - name: Setup MSBuild ExtensionPack
-      run: choco install msbuild.extensionpack --version=4.0.15.0 -y    
-      
-    - name: Restore Application packages
-      run: nuget restore Desktop\Application\MaxMix.sln
-    - name: Build Application
-      run: msbuild Desktop\Build.msbuild -p:SolutionDir=Application -p:Version=${{env.VERSION}}.0 -p:Configuration=Debug -p:Platform="Any CPU"
+      - name: Build Firmware - Full step
+        run: platformio run --project-dir .\Embedded\MaxMix -e nano-cli -e nano-cli-halfstep
 
-    - name: Restore DriverInstaller packages
-      run: nuget restore Desktop\DriverInstaller\DriverInstaller.sln
-    - name: Build DriverInstaller
-      run: msbuild Desktop\Build.msbuild -p:SolutionDir=DriverInstaller -p:Version=${{env.VERSION}}.0 -p:Configuration=Debug -p:Platform="Any CPU"
+      - name: Setup NuGet.exe
+        uses: NuGet/setup-nuget@v1
+      - name: Setup MSBuild.exe
+        uses: microsoft/setup-msbuild@v2
+      - name: Setup MSBuild ExtensionPack
+        run: choco install msbuild.extensionpack --version=4.0.15.0 -y
 
-    - name: Restore FirmwareInstaller packages
-      run: nuget restore Desktop\FirmwareInstaller\FirmwareInstaller.sln
-    - name: Build FirmwareInstaller
-      run: msbuild Desktop\Build.msbuild -p:SolutionDir=FirmwareInstaller -p:Version=${{env.VERSION}}.0 -p:Configuration=Debug -p:Platform="Any CPU"
+      - name: Restore Application packages
+        run: nuget restore Desktop\Application\MaxMix.sln
+      - name: Build Application
+        run: msbuild Desktop\Build.msbuild -p:SolutionDir=Application -p:Version=${{env.VERSION}}.0 -p:Configuration=Debug -p:Platform="Any CPU"
 
-    - name: Setup Advanced Installer
-      run: choco install advanced-installer --version=17.1.2 -y
-    - name: Add Advanced Installer to path
-      shell: bash
-      run: echo "C:/Program Files (x86)/Caphyon/Advanced Installer 17.1.2/bin/x86" >> $GITHUB_PATH
-    - name: Register Advanced Installer
-      run: AdvancedInstaller.com /register ${{secrets.ADVANCEDINSTALLER_LICENSE}}
-    
-    - name: Set Installer version
-      run: AdvancedInstaller.com /edit Desktop\Installer\Maxmix.aip /SetVersion ${{env.VERSION}}
-    
-    - name: Build Installer
-      run: AdvancedInstaller.com /build Desktop\Installer\Maxmix.aip
-   
-    - name: Create Release
-      id: create-release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{env.VERSION}}
-        release_name: ${{env.VERSION}}
-        body: ''
-        draft: false
-        prerelease: true
+      - name: Restore DriverInstaller packages
+        run: nuget restore Desktop\DriverInstaller\DriverInstaller.sln
+      - name: Build DriverInstaller
+        run: msbuild Desktop\Build.msbuild -p:SolutionDir=DriverInstaller -p:Version=${{env.VERSION}}.0 -p:Configuration=Debug -p:Platform="Any CPU"
 
-    - name: Upload Release Assets - Installer
-      id: upload-release-assets-installer
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: Desktop\Installer\Builds\Maxmix.msi
-        asset_name: Maxmix.${{env.VERSION}}.msi
-        asset_content_type: application/zip
+      - name: Restore FirmwareInstaller packages
+        run: nuget restore Desktop\FirmwareInstaller\FirmwareInstaller.sln
+      - name: Build FirmwareInstaller
+        run: msbuild Desktop\Build.msbuild -p:SolutionDir=FirmwareInstaller -p:Version=${{env.VERSION}}.0 -p:Configuration=Debug -p:Platform="Any CPU"
 
-    - name: Upload Release Assets - Firmware (FullStep)
-      id: upload-release-assets-firmware-fullstep
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: Embedded\MaxMix\.pio\build\nano-cli\firmware.hex
-        asset_name: Maxmix.${{env.VERSION}}.hex
-        asset_content_type: application/zip
+      - name: Setup Advanced Installer
+        run: choco install advanced-installer --version=22.0.0 -y
+      - name: Add Advanced Installer to path
+        shell: bash
+        run: echo "C:/Program Files (x86)/Caphyon/Advanced Installer 22.0/bin/x86" >> $GITHUB_PATH
+      # - name: Register Advanced Installer
+      #   run: AdvancedInstaller.com /register ${{secrets.ADVANCEDINSTALLER_LICENSE}}
 
-    - name: Upload Release Assets - Firmware (HalfStep)
-      id: upload-release-assets-firmware-halfstep
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: Embedded\MaxMix\.pio\build\nano-cli-halfstep\firmware.hex
-        asset_name: Maxmix.${{env.VERSION}}_Half-step.hex
-        asset_content_type: application/zip
+      - name: Set Installer version
+        run: AdvancedInstaller.com /edit Desktop\Installer\Maxmix.aip /SetVersion ${{env.VERSION}}
+
+      - name: Build Installer
+        run: AdvancedInstaller.com /build Desktop\Installer\Maxmix.aip
+
+      - name: Create Release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{env.VERSION}}
+          release_name: ${{env.VERSION}}
+          body: ''
+          draft: false
+          prerelease: true
+
+      - name: Upload Release Assets - Installer
+        id: upload-release-assets-installer
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: Desktop\Installer\Builds\Maxmix.msi
+          asset_name: Maxmix.${{env.VERSION}}.msi
+          asset_content_type: application/zip
+
+      - name: Upload Release Assets - Firmware (FullStep)
+        id: upload-release-assets-firmware-fullstep
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: Embedded\MaxMix\.pio\build\nano-cli\firmware.hex
+          asset_name: Maxmix.${{env.VERSION}}.hex
+          asset_content_type: application/zip
+
+      - name: Upload Release Assets - Firmware (HalfStep)
+        id: upload-release-assets-firmware-halfstep
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: Embedded\MaxMix\.pio\build\nano-cli-halfstep\firmware.hex
+          asset_name: Maxmix.${{env.VERSION}}_Half-step.hex
+          asset_content_type: application/zip
