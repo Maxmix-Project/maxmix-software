@@ -5,6 +5,10 @@ on:
     tags:
       - '*.*.*'
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -76,47 +80,58 @@ jobs:
       - name: Build Installer
         run: AdvancedInstaller.com /build Desktop\Installer\Maxmix.aip
 
-      - name: Create Release
+      - name: Rename Files
+        run: |
+          mv Desktop/Installer/Builds/Maxmix.msi ./Maxmix.${{env.VERSION}}.msi
+          mv Embedded/MaxMix/.pio/build/nano-cli/firmware.hex ./Maxmix.${{env.VERSION}}.hex
+          mv Embedded/MaxMix/.pio/build/nano-cli-halfstep/firmware.hex ./Maxmix.${{env.VERSION}}_Half-step.hex
+
+      - name: Release
         id: create-release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{env.VERSION}}
-          release_name: ${{env.VERSION}}
-          body: ''
+          name: ${{env.VERSION}}
           draft: false
           prerelease: true
+          generate_release_notes: true
+          append_body: true
+          files: |
+            Maxmix.${{env.VERSION}}.msi
+            Maxmix.${{env.VERSION}}.hex
+            Maxmix.${{env.VERSION}}_Half-step.hex
 
-      - name: Upload Release Assets - Installer
-        id: upload-release-assets-installer
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: Desktop\Installer\Builds\Maxmix.msi
-          asset_name: Maxmix.${{env.VERSION}}.msi
-          asset_content_type: application/zip
+      # - name: Upload Release Assets - Installer
+      #   id: upload-release-assets-installer
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ steps.create-release.outputs.upload_url }}
+      #     asset_path: Desktop\Installer\Builds\Maxmix.msi
+      #     asset_name: Maxmix.${{env.VERSION}}.msi
+      #     asset_content_type: application/zip
 
-      - name: Upload Release Assets - Firmware (FullStep)
-        id: upload-release-assets-firmware-fullstep
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: Embedded\MaxMix\.pio\build\nano-cli\firmware.hex
-          asset_name: Maxmix.${{env.VERSION}}.hex
-          asset_content_type: application/zip
+      # - name: Upload Release Assets - Firmware (FullStep)
+      #   id: upload-release-assets-firmware-fullstep
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ steps.create-release.outputs.upload_url }}
+      #     asset_path: Embedded\MaxMix\.pio\build\nano-cli\firmware.hex
+      #     asset_name: Maxmix.${{env.VERSION}}.hex
+      #     asset_content_type: application/zip
 
-      - name: Upload Release Assets - Firmware (HalfStep)
-        id: upload-release-assets-firmware-halfstep
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: Embedded\MaxMix\.pio\build\nano-cli-halfstep\firmware.hex
-          asset_name: Maxmix.${{env.VERSION}}_Half-step.hex
-          asset_content_type: application/zip
+      # - name: Upload Release Assets - Firmware (HalfStep)
+      #   id: upload-release-assets-firmware-halfstep
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ steps.create-release.outputs.upload_url }}
+      #     asset_path: Embedded\MaxMix\.pio\build\nano-cli-halfstep\firmware.hex
+      #     asset_name: Maxmix.${{env.VERSION}}_Half-step.hex
+      #     asset_content_type: application/zip
