@@ -3,12 +3,12 @@
 // AUTHOR: Ruben Henares
 // EMAIL: rhenares0@gmail.com
 //
-// DECRIPTION:
-// 
+// DESCRIPTION:
+//
 //
 //
 //********************************************************
-
+#include <Arduino.h>
 
 //********************************************************
 // *** FUNCTIONS

@@ -3,7 +3,7 @@
 // AUTHOR: Ruben Henares
 // EMAIL: rhenares0@gmail.com
 //
-// DECRIPTION:
+// DESCRIPTION:
 //
 //
 //********************************************************
@@ -16,11 +16,11 @@
 // Custom
 #include "Config.h"
 #include "Display.h"
+#include "Lighting.h"
 #include "Communications.h"
 
 // Third-party
 #include "src/Adafruit_GFX/Adafruit_GFX.h"
-#include "src/Adafruit_NeoPixel/Adafruit_NeoPixel.h"
 #include "src/Adafruit_SSD1306/Adafruit_SSD1306.h"
 #include "src/ButtonEvents/ButtonEvents.h"
 #include "src/Rotary/Rotary.h"
@@ -53,25 +53,23 @@ uint32_t g_LastActivity;
 uint32_t g_NextPixelUpdate;
 uint32_t g_LastSteps;
 
-// Lighting
-Adafruit_NeoPixel g_Pixels(PIXELS_COUNT, PIN_PIXELS, NEO_GRB + NEO_KHZ800);
-
 //********************************************************
-// *** INTERRUPTS
-//********************************************************
-void timerIsr()
-{
-    uint8_t encoderDir = g_Encoder.process();
-    if (encoderDir == DIR_CW)
-        g_EncoderSteps++;
-    else if (encoderDir == DIR_CCW)
-        g_EncoderSteps--;
-
-    if (g_ButtonEvent == none && g_EncoderButton.update())
-    {
-        g_ButtonEvent = g_EncoderButton.event();
-    }
-}
+// *** FUNCTION DECLARATIONS
+//*******************************************************
+void timerIsr();
+void ResetState();
+int8_t ComputeAcceleratedVolume(int8_t encoderDelta, uint32_t deltaTime, int16_t volume);
+void PreviousSession(void);
+void NextSession(void);
+bool CanScrollLeft(void);
+bool CanScrollRight(void);
+uint8_t GetIndexForMode(DisplayMode mode);
+void ComputeVolumeChange(int8_t index, int8_t encoderSteps, uint32_t deltaTime);
+bool ProcessEncoderRotation();
+bool ProcessEncoderButton();
+bool ProcessSleep();
+bool ProcessDisplayScroll();
+void UpdateDisplay();
 
 //********************************************************
 // *** MAIN
@@ -86,9 +84,7 @@ void setup()
     Communications::Initialize();
 
     //--- Pixels
-    g_Pixels.setBrightness(PIXELS_BRIGHTNESS);
-    g_Pixels.begin();
-    g_Pixels.show();
+    Lighting::Initialize();
 
     // --- Display
     Display::Initialize();
@@ -111,8 +107,8 @@ void loop()
     g_Now = millis();
 
     Command command = Communications::Read();
-    // Returns the type of message we recieved, update oled if we recieved data that impacts what is currently on display
-    // This should really depend on a few things, like setings of continious scroll, vs new item index vs count, etc.
+    // Returns the type of message we received, update oled if we received data that impacts what is currently on display
+    // This should really depend on a few things, like setings of continuous scroll, vs new item index vs count, etc.
     // for now lets be safe and check for any command that impacts a stored value, we can fine tune this later
     g_DisplayDirty = (command >= Command::SETTINGS || command <= Command::VOLUME_ALT_CHANGE);
     if (command == Command::CURRENT_SESSION || command == Command::ALTERNATE_SESSION ||
@@ -151,12 +147,29 @@ void loop()
     if (g_Now - g_NextPixelUpdate < 0x80000000U)
     {
         g_NextPixelUpdate = g_Now + 33;
-        UpdateLighting();
+        Lighting::UpdateLighting();
     }
 
     // Reset / Disconnect if no serial activity.
     if ((g_SessionInfo.mode != DisplayMode::MODE_SPLASH) && (g_Now - g_HeartbeatTimeout < 0x80000000U))
         ResetState();
+}
+
+//********************************************************
+// *** INTERRUPTS
+//********************************************************
+void timerIsr()
+{
+    uint8_t encoderDir = g_Encoder.process();
+    if (encoderDir == DIR_CW)
+        g_EncoderSteps++;
+    else if (encoderDir == DIR_CCW)
+        g_EncoderSteps--;
+
+    if (g_ButtonEvent == none && g_EncoderButton.update())
+    {
+        g_ButtonEvent = g_EncoderButton.event();
+    }
 }
 
 //---------------------------------------------------------

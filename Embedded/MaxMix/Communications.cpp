@@ -8,7 +8,7 @@ extern ModeStates g_ModeStates;
 extern uint32_t g_HeartbeatTimeout;
 extern uint32_t g_Now;
 
-//#define TEST_HARNESS
+// #define TEST_HARNESS
 
 namespace Communications
 {
@@ -22,11 +22,11 @@ namespace Communications
     {
         // Future Notes: Serial.readBytes returns the number of bytes actually read
         // if necessary, we can use that compared against sizeof(T) to validate message
-        // was recieved in it's entirity. However, if this happens, we should look at Serial timeout first.
+        // was received in it's entirety. However, if this happens, we should look at Serial timeout first.
         Command command = Command::NONE;
         if (Serial.available())
         {
-            g_HeartbeatTimeout = g_Now + DEVICE_RESET_AFTER_INACTIVTY;
+            g_HeartbeatTimeout = g_Now + DEVICE_RESET_AFTER_INACTIVITY;
             command = (Command)Serial.read();
             if (command == Command::TEST)
                 Write(command);
@@ -42,7 +42,7 @@ namespace Communications
                 Serial.readBytes((char *)&g_Sessions[command - Command::VOLUME_CURR_CHANGE].data, sizeof(VolumeData));
             else if (command == Command::MODE_STATES)
                 Serial.readBytes((char *)&g_ModeStates, sizeof(ModeStates));
-            // Do nothing: DEBUG, NONE, ERROR?
+                // Do nothing: DEBUG, NONE, ERROR?
 #ifdef TEST_HARNESS
             else if (command == Command::DEBUG)
             {
